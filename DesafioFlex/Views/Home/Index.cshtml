@@ -1,0 +1,112 @@
+﻿@{
+    ViewBag.Title = "Gerenciamento de dívidas";
+    @model List<DesafioFlex.Models.Divida>
+}
+
+<div class="row">
+    <div class="pull-right col-lg-3">
+        @foreach (var item in Model)
+        {
+            string clienteName = "";
+            string motivo = item.Motivo;
+            if(motivo.Length > 10)
+            {
+                motivo = motivo.Substring(0, 10) + "…";
+            }
+            foreach (var cli in ViewBag.Clientes)
+            {
+                if (cli.id == item.ClienteId)
+                {
+                    clienteName = cli.name;
+                    break;
+                }
+            }
+            <div id="@item.Id" data-clienteid="@item.ClienteId" data-motivo="@item.Motivo" data-valor="@item.Valor" data-datadivida="@item.DataDivida" class="card text-white bg-danger mb-3">
+                <div class="card-header">@clienteName <i>(@motivo)</i></div>
+            </div>
+        }
+    </div>
+    <div class="pull-right col-lg-9">
+        <form action="@Url.Action("Salvar", "Home")" method="POST" class="form-horizontal">
+            <input type="hidden" name="hdnId" />
+            <div class="form-group">
+                <label for="ddlCliente">Cliente</label>
+                <select id="ddlCliente" name="ddlCliente" class="form-control" required>
+                    <option value="">Selecione um cliente</option>
+                    @foreach (var cli in ViewBag.Clientes)
+                    {
+                        <option value="@cli.id">@cli.name</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="txtMotivo">Motivo da dívida</label>
+                <input type="text" class="form-control" id="txtMotivo" name="txtMotivo" placeholder="Adicione o motivo da dívida" maxlength="4000" required>
+            </div>
+            <div class="form-group">
+                <label for="txtValor">Valor da dívida</label>
+                <input id="txtValor" name="txtValor" class="form-control money" placeholder="Adicione o valor da dívida" type="text" required>
+            </div>
+            <div class="form-group">
+                <label for="txtData">Data da dívida</label>
+                <input id="txtData" name="txtData" class="form-control" type="date" required>
+            </div>
+            <div class="col-lg-12" style="text-align:right;">
+                @Html.ActionLink("Deletar", "Deletar", null, new { id = "btnExcluir", @class = "btn btn-danger", @style = "display:none" })
+                <button type="submit" style="margin-right: -15px;" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+@section scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $(document).on('click', '#btnExcluir', function (e) {
+                e.preventDefault();
+                var id = parseInt($('input[name="hdnId"]').val());
+                if (id > 0) {
+                    if (confirm('Tem certeza que deseja excluir essa dívida?')) {
+                        $.ajax({
+                            type: 'POST',
+                            url: $(this).attr('href'),
+                            data: {
+                                hdnId: id
+                            },
+                            success: function (result) {
+                                if (result.toLowerCase() === 'true') {
+                                    $('#' + id).fadeOut(500);
+                                    swal("Sucesso", "Registro excluído com sucesso", "success");
+                                } else {
+                                    swal("Erro", "Não foi excluir o registro.", "error");
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            $(document).on('click', '.card', function () {
+                var $this = $(this);
+                var id = $this.attr('id');
+                $('input[name="hdnId"]').val(id);
+                $('#ddlCliente').val($this.data('clienteid'));
+                $('#txtMotivo').val($this.data('motivo'));
+                $('#txtValor').val($this.data('valor'));
+                var auxData = $this.data('datadivida').split('/');
+                $('#txtData').val((auxData[2].split(' '))[0] + '-' + auxData[1] + '-' + auxData[0]);
+                $('#btnExcluir').css('display', 'inline-block');
+            });
+            
+            $('.money').mask('000.000.000,00', { reverse: true });
+
+            var tdSuccess = '@TempData["Success"]';
+            var tdError = '@(TempData["Error"] != null ? TempData["Error"].ToString() : "")';
+            if (tdSuccess !== '') {
+                swal("Sucesso", tdSuccess.toString(), "success");
+            }
+            if (tdError !== '') {
+                swal("Erro", tdError.toString(), "error");
+            }
+        });
+    </script>
+}

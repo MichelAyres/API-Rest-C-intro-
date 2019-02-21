@@ -1,0 +1,15 @@
+﻿body {
+    padding-bottom: 20px;
+}
+
+footer {
+    text-align: right;
+}
+
+#btnLiquidar, #btnExcluir {
+    margin-right: 10px;
+}
+
+.card {
+    cursor: pointer;
+}
