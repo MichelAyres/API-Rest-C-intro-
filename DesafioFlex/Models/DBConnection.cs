@@ -29,7 +29,7 @@ namespace DesafioFlex.Models
         {
             if (Connection == null)
             {
-                // ToDo: Remover modificar para os dados aplicaveis
+                // ToDo: Modificar para os dados aplicaveis
                 string server = "localhost";
                 string user = "root";
                 string pass = "senha de acesso ao banco";
