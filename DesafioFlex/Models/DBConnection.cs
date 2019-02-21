@@ -32,7 +32,7 @@ namespace DesafioFlex.Models
                 // ToDo: Modificar para os dados aplicaveis
                 string server = "localhost";
                 string user = "root";
-                string pass = "senha de acesso ao banco";
+                string pass = "senha";
                 string connstring = string.Format("Server={0}; database=flex; UID={1}; password={2}", server, user, pass);
                 connection = new MySqlConnection(connstring);
                 connection.Open();

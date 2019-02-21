@@ -13,6 +13,5 @@ namespace DesafioFlex.Models
         public decimal Valor { get; set; }
         public DateTime DataDivida { get; set; }
         public DateTime? ExcluidoEm { get; set; }
-        public List<Cliente> Clientes { get; set; }
     }
 }

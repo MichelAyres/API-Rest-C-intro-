@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Desafio Flex - @ViewBag.Title</title>
@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
+        <div id="divContainer" class="container">
             <div class="navbar-header pull-right">
                 <a class="btn btn-primary" style="margin-top: 6px;" href="javascript:novoForm();" role="button">Novo registro</a>
             </div>
@@ -33,10 +33,17 @@
     @RenderSection("scripts", required: false){
     <script type="text/javascript">
         function novoForm() {
-            var form = $('form');
-            form[0].reset();
+            $('form')[0].reset();
+            $('.card').removeClass('bg-info').addClass('bg-danger');
             $('#btnExcluir').css('display', 'none');
         }
     </script>
-</body >
-</html >
+    <style>
+        @@media( max-width: 768px){
+            #divContainer {
+                padding: 0;
+            }
+        }
+    </style>
+</body>
+</html>

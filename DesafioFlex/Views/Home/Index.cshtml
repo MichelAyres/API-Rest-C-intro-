@@ -1,33 +1,11 @@
 ﻿@{
     ViewBag.Title = "Gerenciamento de dívidas";
-    @model List<DesafioFlex.Models.Divida>
 }
 
 <div class="row">
-    <div class="pull-right col-lg-3">
-        @foreach (var item in Model)
-        {
-            string clienteName = "";
-            string motivo = item.Motivo;
-            if(motivo.Length > 10)
-            {
-                motivo = motivo.Substring(0, 10) + "…";
-            }
-            foreach (var cli in ViewBag.Clientes)
-            {
-                if (cli.id == item.ClienteId)
-                {
-                    clienteName = cli.name;
-                    break;
-                }
-            }
-            <div id="@item.Id" data-clienteid="@item.ClienteId" data-motivo="@item.Motivo" data-valor="@item.Valor" data-datadivida="@item.DataDivida" class="card text-white bg-danger mb-3">
-                <div class="card-header">@clienteName <i>(@motivo)</i></div>
-            </div>
-        }
-    </div>
+    <div id="divDividas" class="pull-right col-lg-3"></div>
     <div class="pull-right col-lg-9">
-        <form action="@Url.Action("Salvar", "Home")" method="POST" class="form-horizontal">
+        <form class="form-horizontal">
             <input type="hidden" name="hdnId" />
             <div class="form-group">
                 <label for="ddlCliente">Cliente</label>
@@ -52,61 +30,140 @@
                 <input id="txtData" name="txtData" class="form-control" type="date" required>
             </div>
             <div class="col-lg-12" style="text-align:right;">
-                @Html.ActionLink("Deletar", "Deletar", null, new { id = "btnExcluir", @class = "btn btn-danger", @style = "display:none" })
-                <button type="submit" style="margin-right: -15px;" class="btn btn-primary">Salvar</button>
+                @Html.ActionLink("Deletar", null, null, new { id = "btnExcluir", @class = "btn btn-danger", @style = "display:none;" })
+                @Html.ActionLink("Salvar", null, null, new { id = "btnSalvar", @class = "btn btn-primary", @style = "margin-right: -15px;" })
             </div>
         </form>
     </div>
 </div>
 @section scripts {
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $(document).on('click', '#btnExcluir', function (e) {
-                e.preventDefault();
-                var id = parseInt($('input[name="hdnId"]').val());
-                if (id > 0) {
-                    if (confirm('Tem certeza que deseja excluir essa dívida?')) {
-                        $.ajax({
-                            type: 'POST',
-                            url: $(this).attr('href'),
-                            data: {
-                                hdnId: id
-                            },
-                            success: function (result) {
-                                if (result.toLowerCase() === 'true') {
-                                    $('#' + id).fadeOut(500);
-                                    swal("Sucesso", "Registro excluído com sucesso", "success");
-                                } else {
-                                    swal("Erro", "Não foi excluir o registro.", "error");
+<script type="text/javascript">
+    var cardDiv = '<div id="{0}" class="card text-white bg-danger mb-3"><div class="card-header">{1} <br/><i><small>({2})</small></i></div></div>';
+    $(document).ready(function () {
+        updateDividas();
+        $(document).on('click', '#btnSalvar', function (e) {
+            e.preventDefault();
+            var id = parseInt($('input[name="hdnId"]').val());
+            var valor = $('#txtValor').val();
+            valor = (valor.replace(/\./g, '')).replace(',', '.');
+            var divida = {
+                Id: id,
+                ClienteId: $('#ddlCliente').val(),
+                Motivo: $('#txtMotivo').val(),
+                Valor: valor,
+                DataDivida: $('#txtData').val()
+            };
+
+            $.ajax({
+                type: (id > 0 ? 'PUT' : 'POST'),
+                url: '/api/Divida' + (id > 0 ? '/' + id : ''),
+                data: JSON.stringify(divida),
+                contentType: "application/json",
+                success: function (sucesso) {
+                    if (sucesso) {
+                        var card = $('#' + id);
+                        if (card.length) {
+                            card.find('.card-header').html($('#ddlCliente option[value="' + divida.ClienteId + '"]').text() + ' <br/><i><small>(' + subStr(divida.Motivo, 10) + '</small></i>');
+                            $('#' + id).removeClass('bg-info').addClass('bg-danger');
+                            novoForm();
+                        }
+                        else {
+                            $.ajax({
+                                type: 'GET',
+                                url: '/api/Divida/' + id,
+                                contentType: "application/json",
+                                async: false,
+                                success: function (element) {
+                                    swal("Sucesso", "Registro " + (id > 0 ? 'atualizado' : 'salvo') + " com sucesso", "success");
+                                    novoForm();
+                                    $('#divDividas').append(String.format(cardDiv, element.Id, $('#ddlCliente option[value="' + element.ClienteId + '"]').text(), subStr(element.Motivo, 10)));
                                 }
-                            }
-                        });
+                            });
+                        }
+                    } else {
+                        swal("Erro", "Não foi " + (id > 0 ? 'atualizar' : 'salvar') + " o registro. Tente novamente.", "error");
                     }
                 }
             });
+        });
 
-            $(document).on('click', '.card', function () {
-                var $this = $(this);
-                var id = $this.attr('id');
-                $('input[name="hdnId"]').val(id);
-                $('#ddlCliente').val($this.data('clienteid'));
-                $('#txtMotivo').val($this.data('motivo'));
-                $('#txtValor').val($this.data('valor'));
-                var auxData = $this.data('datadivida').split('/');
-                $('#txtData').val((auxData[2].split(' '))[0] + '-' + auxData[1] + '-' + auxData[0]);
-                $('#btnExcluir').css('display', 'inline-block');
-            });
-            
-            $('.money').mask('000.000.000,00', { reverse: true });
-
-            var tdSuccess = '@TempData["Success"]';
-            var tdError = '@(TempData["Error"] != null ? TempData["Error"].ToString() : "")';
-            if (tdSuccess !== '') {
-                swal("Sucesso", tdSuccess.toString(), "success");
+        $(document).on('click', '#btnExcluir', function (e) {
+            e.preventDefault();
+            var id = parseInt($('input[name="hdnId"]').val());
+            if (id > 0) {
+                if (confirm('Tem certeza que deseja excluir essa dívida?')) {
+                    $.ajax({
+                        type: 'DELETE',
+                        url: '/api/Divida/' + id,
+                        contentType: "application/json",
+                        success: function (result) {
+                            if (result) {
+                                novoForm();
+                                $('#' + id).fadeOut(500);
+                                buildAuxCard();
+                                swal("Sucesso", "Registro excluído com sucesso", "success");
+                            } else {
+                                swal("Erro", "Não foi excluir o registro.", "error");
+                            }
+                        }
+                    });
+                }
             }
-            if (tdError !== '') {
-                swal("Erro", tdError.toString(), "error");
+            else {
+                swal("Erro", "Nenhum registro foi selecionado.", "error");
             }
         });
-    </script>
+
+        $(document).on('click', '.card:not(.not-clicable)', function () {
+            var $this = $(this);
+            var id = $this.attr('id');
+            novoForm();
+            $.ajax({
+                type: 'GET',
+                url: '/api/Divida/' + id,
+                contentType: "application/json",
+                async: false,
+                success: function (d) {
+                    $('input[name="hdnId"]').val(id);
+                    $('#ddlCliente').val(d.ClienteId);
+                    $('#txtMotivo').val(d.Motivo);
+                    $('#txtValor').val(d.Valor);
+                    $('#txtData').val((d.DataDivida.split('T'))[0]);
+                    $('#btnExcluir').css('display', 'inline-block');
+                    $('#' + id).removeClass('bg-danger').addClass('bg-info');
+                }
+            });
+        });
+
+        $('.money').mask('000.000.000,00', { reverse: true });
+    });
+
+    function updateDividas() {
+        $.ajax({
+            type: 'GET',
+            url: '/api/Divida',
+            contentType: "application/json",
+            success: function (result) {
+                var list = $('#divDividas');
+                list.html('');
+                if (result != null) {
+                    $.each(result, function (index, element) {
+                        list.append(String.format(cardDiv, element.Id, $('#ddlCliente option[value="' + element.ClienteId + '"]').text(), subStr(element.Motivo, 10)));
+                    });
+                }
+                buildAuxCard();
+            }
+        });
+    }
+
+    function buildAuxCard() {
+        var list = $('#divDividas');
+        if (list.find('.card:visible').length == 0) {
+            list.append('<div class="card text-white bg-success mb-3 not-clicable"><div class="card-header">Nenhuma dívida cadastrada.</div></div>');
+        }
+        else {
+            list.find('.card.not - clicable').remove();
+        }
+    }
+</script>
 }

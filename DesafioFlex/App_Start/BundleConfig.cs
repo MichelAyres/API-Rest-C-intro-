@@ -9,7 +9,8 @@ namespace DesafioFlex
         public static void RegisterBundles(BundleCollection bundles)
         {
             bundles.Add(new ScriptBundle("~/bundles/auxiliares").Include(
-                      "~/Scripts/sweetalert.min.js"));
+                      "~/Scripts/sweetalert.min.js",
+                      "~/Scripts/utils.js"));
 
             bundles.Add(new StyleBundle("~/Content/css").Include(
                       "~/Content/site.css"));

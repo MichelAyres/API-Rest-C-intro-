@@ -10,6 +10,11 @@ footer {
     margin-right: 10px;
 }
 
-.card {
+.card:not(.not-clicable) {
     cursor: pointer;
+}
+
+#divDividas {
+    max-height: 390px;
+    overflow-y: auto;
 }
